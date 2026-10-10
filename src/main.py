@@ -97,6 +97,7 @@ def detect_bruteforce(events):
         if failed_count >= MAX_FAILED_ATTEMPTS:
             suspicious.append(
                 {
+                    "type": "bruteforce",  # Added type key
                     "ip": ip,
                     "start_time": window_start,
                     "failed_count": failed_count,
@@ -114,42 +115,122 @@ def send_alert(alerts):
         print("Webhook URL not set. Skipping alert.")
         return
 
-    message_lines = ["**Suspicious activity detected:**"]
+    message_lines = ["Suspicious activity detected:"]
+
     for alert in alerts:
-        message_lines.append(
-            f"- IP `{alert['ip']}` had **{alert['failed_count']}** failed attempts "
-            f"starting at `{alert['start_time']}`"
-        )
-
-    payload = {"content": "\n".join(message_lines)}
-
-    try:
-        response = requests.post(WEBHOOK_URL, json=payload)
-        # FIXED: Added the collection check to resolve the syntax error
-        if response.status_code in range(200, 300):
-            print("Alert sent to Discord.")
-        else:
-            print(
-                f"Discord rejected the alert. Status Code: {response.status_code}, Response: {response.text}"
-            )
-    except Exception as e:
-        print(f"Failed to send alert: {e}")
-
-
-# outputs results
-def main():
-    events = load_logs(LOG_FILE_PATH)
-    bruteforce_alerts = detect_bruteforce(events)
-
-    if bruteforce_alerts:
-        print("[!] Suspicious activity detected:")
-        for alert in bruteforce_alerts:
-            print(
+        # Brute-force alerts
+        if alert.get("type") == "bruteforce":  # Changed to safely use type check
+            message_lines.append(
                 f"- IP {alert['ip']} had {alert['failed_count']} failed attempts "
                 f"starting at {alert['start_time']}"
             )
 
-        send_alert(bruteforce_alerts)
+        # Admin access, after-hours, high-volume, etc.
+        elif "reason" in alert:
+            message_lines.append(
+                f"- IP {alert['ip']} at {alert['time']}: {alert['reason']}"
+            )
+
+        # Fallback (just in case)
+        else:
+            message_lines.append(f"- IP {alert['ip']} triggered an alert.")
+
+    payload = {"content": "\n".join(message_lines)}
+
+    try:
+        requests.post(WEBHOOK_URL, json=payload)
+        print("Alert sent to Discord.")
+    except Exception as e:
+        print(f"Failed to send alert: {e}")
+
+#detects high volume of requests from a single IP within a short time frame
+def detect_high_volume(events, threshold=10, window_seconds=5):
+    suspicious = []
+
+    # Sort by time
+    events = sorted(events, key=lambda e: e["timestamp"])
+
+    for i, event in enumerate(events):
+        ip = event["ip"]
+        start_time = event["timestamp"]
+        count = 1
+
+        for j in range(i + 1, len(events)):
+            next_event = events[j]
+            if next_event["ip"] != ip:
+                continue
+
+            delta = (next_event["timestamp"] - start_time).total_seconds()
+            if delta > window_seconds:
+                break
+
+            count += 1
+
+        if count >= threshold:
+            suspicious.append({
+                "type": "high_volume",  # Added type key
+                "ip": ip,
+                "time": start_time,
+                "count": count,
+                "reason": f"High request volume ({count} requests in {window_seconds}s)"
+            })
+
+    return suspicious
+
+#detects activity outside of normal hours (midnight to 6 AM)
+def detect_after_hours(events):
+    suspicious = []
+
+    for event in events:
+        hour = event["timestamp"].hour
+        if hour < 6:  # midnight to 6 AM
+            suspicious.append({
+                "type": "after_hours",  # Added type key
+                "ip": event["ip"],
+                "time": event["timestamp"],
+                "reason": "Activity outside normal hours"
+            })
+
+    return suspicious
+
+#Flags admin access attempts.
+def detect_admin_access(events):
+    suspicious = []
+
+    for event in events:
+        if event["path"] == "/admin":
+            suspicious.append({
+                "type": "admin_access",  # Added type key
+                "ip": event["ip"],
+                "time": event["timestamp"],
+                "reason": "Accessed /admin page"
+            })
+
+    return suspicious
+
+# outputs results
+def main():
+    events = load_logs(LOG_FILE_PATH)
+
+    bruteforce_alerts = detect_bruteforce(events)
+    admin_alerts = detect_admin_access(events)
+    after_hours_alerts = detect_after_hours(events)
+    volume_alerts = detect_high_volume(events)
+
+    all_alerts = bruteforce_alerts + admin_alerts + after_hours_alerts + volume_alerts
+
+    if all_alerts:
+        print("[!] Suspicious activity detected:")
+        for alert in all_alerts:
+            if alert["type"] == "bruteforce":
+                print(
+                    f"- IP {alert['ip']} had {alert['failed_count']} failed attempts "
+                    f"starting at {alert['start_time']}"
+                )
+            else:
+                print(f"- IP {alert['ip']} at {alert['time']}: {alert['reason']}")
+
+        send_alert(all_alerts)
 
     else:
         print("No suspicious activity detected.")
