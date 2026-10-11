@@ -95,17 +95,13 @@ def detect_bruteforce(events):
 
         # if the counter is more than 3, it creates an alert dictionary.
         if failed_count >= MAX_FAILED_ATTEMPTS:
-            suspicious.append(
-                {
-                    "type": "bruteforce",  # Added type key
-                    "ip": ip,
-                    "start_time": window_start,
-                    "failed_count": failed_count,
-                }
-            )
-            # Lock out this IP from causing duplicate alerts until this specific window cluster finishes
-            last_flagged_until[ip] = last_failed_time
-
+            suspicious.append({
+                "ip": ip,
+                "start_time": window_start,
+                "failed_count": failed_count,
+                "type": "bruteforce",
+                "severity": "high"
+            })
     return suspicious
 
 
@@ -115,20 +111,28 @@ def send_alert(alerts):
         print("Webhook URL not set. Skipping alert.")
         return
 
+    severity_icons = {
+        "high": "🔴",
+        "medium": "🟠",
+        "low": "🟢"
+    }
+
     message_lines = ["Suspicious activity detected:"]
 
     for alert in alerts:
+        icon = severity_icons.get(alert.get("severity"), "⚪")
+
         # Brute-force alerts
         if alert.get("type") == "bruteforce":  # Changed to safely use type check
             message_lines.append(
-                f"- IP {alert['ip']} had {alert['failed_count']} failed attempts "
+                f"{icon} IP {alert['ip']} had {alert['failed_count']} failed attempts "
                 f"starting at {alert['start_time']}"
             )
 
         # Admin access, after-hours, high-volume, etc.
         elif "reason" in alert:
             message_lines.append(
-                f"- IP {alert['ip']} at {alert['time']}: {alert['reason']}"
+                f"{icon} IP {alert['ip']} at {alert['time']}: {alert['reason']}"
             )
 
         # Fallback (just in case)
@@ -168,11 +172,12 @@ def detect_high_volume(events, threshold=10, window_seconds=5):
 
         if count >= threshold:
             suspicious.append({
-                "type": "high_volume",  # Added type key
                 "ip": ip,
                 "time": start_time,
                 "count": count,
-                "reason": f"High request volume ({count} requests in {window_seconds}s)"
+                "reason": f"High request volume ({count} requests in {window_seconds}s)",
+                "type": "high_volume",
+                "severity": "medium"
             })
 
     return suspicious
@@ -185,10 +190,11 @@ def detect_after_hours(events):
         hour = event["timestamp"].hour
         if hour < 6:  # midnight to 6 AM
             suspicious.append({
-                "type": "after_hours",  # Added type key
                 "ip": event["ip"],
                 "time": event["timestamp"],
-                "reason": "Activity outside normal hours"
+                "reason": "Activity outside normal hours",
+                "type": "after_hours",
+                "severity": "low"
             })
 
     return suspicious
@@ -200,10 +206,11 @@ def detect_admin_access(events):
     for event in events:
         if event["path"] == "/admin":
             suspicious.append({
-                "type": "admin_access",  # Added type key
                 "ip": event["ip"],
                 "time": event["timestamp"],
-                "reason": "Accessed /admin page"
+                "reason": "Accessed /admin page",
+                "type": "admin_access",
+                "severity": "medium"
             })
 
     return suspicious
@@ -222,13 +229,15 @@ def main():
     if all_alerts:
         print("[!] Suspicious activity detected:")
         for alert in all_alerts:
+            icon = {"high": "🔴", "medium": "🟠", "low": "🟢"}.get(alert["severity"], "⚪")
+            
             if alert["type"] == "bruteforce":
                 print(
-                    f"- IP {alert['ip']} had {alert['failed_count']} failed attempts "
+                    f"{icon} IP {alert['ip']} had {alert['failed_count']} failed attempts "
                     f"starting at {alert['start_time']}"
                 )
             else:
-                print(f"- IP {alert['ip']} at {alert['time']}: {alert['reason']}")
+                print(f"{icon} IP {alert['ip']} at {alert['time']}: {alert['reason']}")
 
         send_alert(all_alerts)
 
