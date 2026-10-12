@@ -12,7 +12,23 @@ FAILED_STATUS_CODES = {"401", "403"}
 MAX_FAILED_ATTEMPTS = 3
 TIME_WINDOW_SECONDS = 10  # e.g. 10 seconds
 
+#picks what IP addresses are allowed to access the system. If an IP is not on the list, it will be flagged.
+ALLOW_LIST = {
+    "192.168.0.50",
+    "10.0.0.1",
+    "127.0.0.1"
+}
 
+#suspicious user agents that will be flagged. If a user agent is not on the list, it will be flagged.
+SUSPICIOUS_USER_AGENTS = {
+    "curl",
+    "python-requests",
+    "sqlmap",
+    "nmap",
+    "wget",
+    "",
+    "-"
+}
 def parse_log_line(line):
     # splits and strips the text line
     parts = line.strip().split()
@@ -116,6 +132,12 @@ def send_alert(alerts):
         "medium": "🟠",
         "low": "🟢"
     }
+#discord embed colours for alerts. Red = high, Orange = medium, Green = low.
+    SEVERITY_COLOURS = {
+    "high": 0xFF0000,     
+    "medium": 0xFFA500,   
+    "low": 0x00FF00       
+}
 
     message_lines = ["Suspicious activity detected:"]
 
@@ -215,6 +237,43 @@ def detect_admin_access(events):
 
     return suspicious
 
+#endpoint scanning detection
+def detect_endpoint_scanning(events, threshold=5, window_seconds=10):
+    suspicious = []
+
+    events = sorted(events, key=lambda e: e["timestamp"])
+
+    for i, event in enumerate(events):
+        if event["ip"] in ALLOW_LIST:
+            continue
+
+        ip = event["ip"]
+        start_time = event["timestamp"]
+        paths_seen = {event["path"]}
+
+        for j in range(i + 1, len(events)):
+            next_event = events[j]
+            if next_event["ip"] != ip:
+                continue
+
+            delta = (next_event["timestamp"] - start_time).total_seconds()
+            if delta > window_seconds:
+                break
+
+            paths_seen.add(next_event["path"])
+
+        if len(paths_seen) >= threshold:
+            suspicious.append({
+                "ip": ip,
+                "time": start_time,
+                "reason": f"Endpoint scanning detected ({len(paths_seen)} unique paths in {window_seconds}s)",
+                "type": "endpoint_scan",
+                "severity": "medium"
+            })
+
+    return suspicious
+
+
 # outputs results
 def main():
     events = load_logs(LOG_FILE_PATH)
@@ -223,8 +282,9 @@ def main():
     admin_alerts = detect_admin_access(events)
     after_hours_alerts = detect_after_hours(events)
     volume_alerts = detect_high_volume(events)
+    endpoint_scan_alerts = detect_endpoint_scanning(events)
 
-    all_alerts = bruteforce_alerts + admin_alerts + after_hours_alerts + volume_alerts
+    all_alerts = bruteforce_alerts + admin_alerts + after_hours_alerts + volume_alerts + endpoint_scan_alerts
 
     if all_alerts:
         print("[!] Suspicious activity detected:")

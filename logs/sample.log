@@ -1,7 +1,37 @@
-2024-10-05 10:01:02 192.168.0.10 GET /login 200
-2024-10-05 10:01:05 192.168.0.10 GET /login 401
-2024-10-05 10:01:06 192.168.0.10 GET /login 401
-2024-10-05 10:01:07 192.168.0.10 GET /login 401
-2024-10-05 10:01:08 192.168.0.10 GET /login 401
-2024-10-05 10:02:10 10.0.0.5 GET /admin 200
+#brute-force +curl (suspicious user-agent)
+2024-10-05 10:01:01 192.168.0.10 GET /login 401 curl/7.88.1
+2024-10-05 10:01:02 192.168.0.10 GET /login 401 curl/7.88.1
+2024-10-05 10:01:03 192.168.0.10 GET /login 401 curl/7.88.1
+2024-10-05 10:01:04 192.168.0.10 GET /login 401 curl/7.88.1
+
+#admin-access + python-requests (suspicious user-agent)
+2024-10-05 10:02:10 10.0.0.5 GET /admin 200 python-requests/2.31.0
+
+#After-hours access
+2024-10-05 02:15:10 172.16.0.20 GET /home 200 Mozilla/5.0
+2024-10-05 02:15:11 172.16.0.20 GET /profile 200 Mozilla/5.0
+
+#high-volume + sqlmap (suspicious user-agent)
+2024-10-05 11:00:00 10.0.0.8 GET /login 200 sqlmap/1.7
+2024-10-05 11:00:01 10.0.0.8 GET /dashboard 200 sqlmap/1.7
+2024-10-05 11:00:02 10.0.0.8 GET /settings 200 sqlmap/1.7
+2024-10-05 11:00:03 10.0.0.8 GET /admin 200 sqlmap/1.7
+2024-10-05 11:00:04 10.0.0.8 GET /api/user 200 sqlmap/1.7
+2024-10-05 11:00:05 10.0.0.8 GET /api/data 200 sqlmap/1.7
+
+#endpoint scanning + sql (suspicious user-agent)
+2024-10-05 11:00:00 10.0.0.8 GET /login 200 sqlmap/1.7
+2024-10-05 11:00:01 10.0.0.8 GET /dashboard 200 sqlmap/1.7
+2024-10-05 11:00:02 10.0.0.8 GET /settings 200 sqlmap/1.7
+2024-10-05 11:00:03 10.0.0.8 GET /admin 200 sqlmap/1.7
+2024-10-05 11:00:04 10.0.0.8 GET /api/user 200 sqlmap/1.7
+2024-10-05 11:00:05 10.0.0.8 GET /api/data 200 sqlmap/1.7
+2024-10-05 11:00:06 10.0.0.8 GET /api/logs 200 sqlmap/1.7
+2024-10-05 11:00:07 10.0.0.8 GET /api/admin 200 sqlmap/1.7
+
+#normal traffic = control (should not trigger any alerts)
+2024-10-05 09:00:05 192.168.0.55 GET /blog 200 Mozilla/5.0
+2024-10-05 09:00:06 192.168.0.55 GET /blog/post1 200 Mozilla/5.0
+2024-10-05 09:00:07 192.168.0.55 GET /blog/post2 200 Mozilla/5.0
+
 
