@@ -1,0 +1,42 @@
+{
+  "webhook_url": "https://discord.com/api/webhooks/1556771799901933689/thUPtfEgVmfQG4ihHtHYrYNuuSBJ4K0BsU7PPFe5Xo7MIC42NceL2fRXvzETzVnfDu7k",
+  "log_file_path": "logs/sample.log",
+
+  "failed_status_codes": ["401", "403"],
+  "max_failed_attempts": 3,
+  "bruteforce_time_window": 10,
+
+  "allow_list": ["127.0.0.1"],
+
+  "suspicious_user_agents": ["curl", "python-requests", "sqlmap", "nmap", "wget"],
+
+  "high_volume_threshold": 10,
+  "high_volume_window": 5,
+
+  "endpoint_scan_threshold": 5,
+  "endpoint_scan_window": 10,
+
+  "severity": {
+    "bruteforce": "high",
+    "admin_access": "medium",
+    "after_hours": "low",
+    "high_volume": "medium",
+    "endpoint_scan": "medium",
+    "suspicious_user_agent": "medium"
+  },
+
+  "severity_colours": {
+    "high": 16711680,
+    "medium": 16753920,
+    "low": 65280
+  },
+
+  "rules": {
+    "bruteforce": true,
+    "admin_access": true,
+    "after_hours": true,
+    "high_volume": true,
+    "endpoint_scan": true,
+    "suspicious_user_agent": true
+  }
+}
