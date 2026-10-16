@@ -1,0 +1,137 @@
+[
+    {
+        "ip": "192.168.0.10",
+        "time": "2024-10-05 10:01:01",
+        "reason": "4 failed login attempts in 10s",
+        "type": "bruteforce",
+        "severity": "high",
+        "geoip": {
+            "country": "Unknown",
+            "region": "Unknown",
+            "city": "Unknown",
+            "isp": "Unknown",
+            "org": "Unknown",
+            "asn": "Unknown"
+        }
+    },
+    {
+        "ip": "10.0.0.5",
+        "time": "2024-10-05 10:02:10",
+        "reason": "Accessed /admin page",
+        "type": "admin_access",
+        "severity": "medium",
+        "geoip": {
+            "country": "Unknown",
+            "region": "Unknown",
+            "city": "Unknown",
+            "isp": "Unknown",
+            "org": "Unknown",
+            "asn": "Unknown"
+        }
+    },
+    {
+        "ip": "10.0.0.8",
+        "time": "2024-10-05 11:00:03",
+        "reason": "Accessed /admin page",
+        "type": "admin_access",
+        "severity": "medium",
+        "geoip": {
+            "country": "Unknown",
+            "region": "Unknown",
+            "city": "Unknown",
+            "isp": "Unknown",
+            "org": "Unknown",
+            "asn": "Unknown"
+        }
+    },
+    {
+        "ip": "172.16.0.20",
+        "time": "2024-10-05 02:15:10",
+        "reason": "Activity outside normal hours",
+        "type": "after_hours",
+        "severity": "low",
+        "geoip": {
+            "country": "Unknown",
+            "region": "Unknown",
+            "city": "Unknown",
+            "isp": "Unknown",
+            "org": "Unknown",
+            "asn": "Unknown"
+        }
+    },
+    {
+        "ip": "10.0.0.8",
+        "time": "2024-10-05 11:00:00",
+        "reason": "12 requests in 5s",
+        "type": "high_volume",
+        "severity": "medium",
+        "geoip": {
+            "country": "Unknown",
+            "region": "Unknown",
+            "city": "Unknown",
+            "isp": "Unknown",
+            "org": "Unknown",
+            "asn": "Unknown"
+        }
+    },
+    {
+        "ip": "10.0.0.8",
+        "time": "2024-10-05 11:00:00",
+        "reason": "8 unique endpoints scanned",
+        "type": "endpoint_scan",
+        "severity": "medium",
+        "geoip": {
+            "country": "Unknown",
+            "region": "Unknown",
+            "city": "Unknown",
+            "isp": "Unknown",
+            "org": "Unknown",
+            "asn": "Unknown"
+        }
+    },
+    {
+        "ip": "192.168.0.10",
+        "time": "2024-10-05 10:01:01",
+        "reason": "Suspicious user-agent: 'curl/7.88.1'",
+        "type": "suspicious_user_agent",
+        "severity": "medium",
+        "geoip": {
+            "country": "Unknown",
+            "region": "Unknown",
+            "city": "Unknown",
+            "isp": "Unknown",
+            "org": "Unknown",
+            "asn": "Unknown"
+        }
+    },
+    {
+        "ip": "10.0.0.5",
+        "time": "2024-10-05 10:02:10",
+        "reason": "Suspicious user-agent: 'python-requests/2.31.0'",
+        "type": "suspicious_user_agent",
+        "severity": "medium",
+        "geoip": {
+            "country": "Unknown",
+            "region": "Unknown",
+            "city": "Unknown",
+            "isp": "Unknown",
+            "org": "Unknown",
+            "asn": "Unknown"
+        }
+    },
+    {
+        "ip": "10.0.0.8",
+        "time": "2024-10-05 11:00:00",
+        "reason": "Suspicious user-agent: 'sqlmap/1.7'",
+        "type": "suspicious_user_agent",
+        "severity": "medium",
+        "geoip": {
+            "country": "Unknown",
+            "region": "Unknown",
+            "city": "Unknown",
+            "isp": "Unknown",
+            "org": "Unknown",
+            "asn": "Unknown"
+        }
+    }
+]

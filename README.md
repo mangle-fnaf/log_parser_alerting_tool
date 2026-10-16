@@ -9,3 +9,11 @@ Features:
 UI/UX features:
 - colour coding activity detected by suspiciousness
 
+
+
+
+ADDED: 
+- JSON export
+- CSV export
+- GeoIP function
+- 

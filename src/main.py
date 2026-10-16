@@ -3,6 +3,7 @@ import datetime #timestamps
 import os #file paths
 import requests #sending discord webhook alerts
 import json #reading config
+import argparse #command-line arguments
 
 with open("src/config.json", "r") as cfg:
     CONFIG = json.load(cfg)
@@ -31,7 +32,7 @@ SEVERITY_ICONS = {
 }
 
 #Splits each log line into components, validates the format
-#converts the tiestamp string to a python datetime object, returns a dictionary with the parsed data, or None if the line is invalid.
+#converts the timestamp string to a python datetime object, returns a dictionary with the parsed data, or None if the line is invalid.
 def parse_log_line(line):
     parts = line.strip().split()
     if len(parts) < 7:
@@ -286,6 +287,93 @@ def dedupe_alerts(alerts):
 
     return list(strongest.values())
 
+#exports alerts to a JSON file for offline analysis, SIEM ingestion, or audit logging.
+def export_json(alerts):
+    os.makedirs("alerts", exist_ok=True)
+    filename = f"alerts/{datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%H-%M-%S')}.json"
+
+    serializable = []
+    for alert in alerts:
+        serializable.append({
+            "ip": alert["ip"],
+            "time": alert["time"].strftime("%Y-%m-%d %H:%M:%S"),
+            "reason": alert["reason"],
+            "type": alert["type"],
+            "severity": alert["severity"],
+            "geoip": alert.get("geoip", {})
+        })
+
+    with open(filename, "w") as f:
+        json.dump(serializable, f, indent=4)
+
+    print(f"Saved alerts to {filename}")
+
+#exports alerts to a CSV file for analysts, spreadsheets, or SIEM ingestion tools that prefer tabular formats.
+def export_csv(alerts):
+    os.makedirs("alerts", exist_ok=True)
+    filename = f"alerts/{datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%H-%M-%S')}.csv"
+
+    with open(filename, "w") as f:
+        f.write("ip,time,reason,type,severity,country,region,city,isp,org,asn\n")
+        for alert in alerts:
+            ip = alert["ip"]
+            time = alert["time"].strftime("%Y-%m-%d %H:%M:%S")
+            reason = alert["reason"].replace(",", ";")
+            type_ = alert["type"]
+            severity = alert["severity"]
+
+            geo = alert.get("geoip", {})
+            country = geo.get("country", "Unknown")
+            region = geo.get("region", "Unknown")
+            city = geo.get("city", "Unknown")
+            isp = geo.get("isp", "Unknown")
+            org = geo.get("org", "Unknown")
+            asn = geo.get("asn", "Unknown")
+
+            f.write(f"{ip},{time},{reason},{type_},{severity},{country},{region},{city},{isp},{org},{asn}\n")
+
+    print(f"Saved alerts to {filename}")
+
+#enriches alerts with GeoIP information such as country, region, city, ISP, and ASN using the ip-api.com service.
+def enrich_geoip(alerts):
+    for alert in alerts:
+        ip = alert["ip"]
+
+        try:
+            response = requests.get(f"http://ip-api.com/json/{ip}?fields=status,country,regionName,city,isp,org,as")
+            data = response.json()
+
+            if data.get("status") == "success":
+                alert["geoip"] = {
+                    "country": data.get("country", "Unknown"),
+                    "region": data.get("regionName", "Unknown"),
+                    "city": data.get("city", "Unknown"),
+                    "isp": data.get("isp", "Unknown"),
+                    "org": data.get("org", "Unknown"),
+                    "asn": data.get("as", "Unknown")
+                }
+            else:
+                alert["geoip"] = {
+                    "country": "Unknown",
+                    "region": "Unknown",
+                    "city": "Unknown",
+                    "isp": "Unknown",
+                    "org": "Unknown",
+                    "asn": "Unknown"
+                }
+
+        except Exception:
+            alert["geoip"] = {
+                "country": "Unknown",
+                "region": "Unknown",
+                "city": "Unknown",
+                "isp": "Unknown",
+                "org": "Unknown",
+                "asn": "Unknown"
+            }
+
+    return alerts
+
 #builds a discord embed and sends it using the webhook URL. It includes the highest severity alert in the embed color and lists all alerts with their details.
 def send_alert(alerts):
     if not WEBHOOK_URL:
@@ -332,8 +420,31 @@ def send_alert(alerts):
     except Exception as e:
         print(f"Failed to send embed alert: {e}")
 
-#loads logs, runs all detection functions, deduplicates alerts, prints them to the console, and sends them to Discord if any are found.
+#parses command-line arguments to allow overriding log paths, disabling exports, or enabling specific rules.
+def parse_cli_args():
+    parser = argparse.ArgumentParser(description="Log Parser Alerting Tool")
+
+    parser.add_argument("--log", help="Override log file path")
+    parser.add_argument("--no-discord", action="store_true", help="Disable Discord alerts")
+    parser.add_argument("--no-json", action="store_true", help="Disable JSON export")
+    parser.add_argument("--no-csv", action="store_true", help="Disable CSV export")
+    parser.add_argument("--rules", help="Comma-separated list of rules to enable")
+
+    return parser.parse_args()
+
+#loads logs, runs all detection functions, deduplicates alerts, enriches them with GeoIP, prints them to the console, exports them to JSON and CSV, and sends them to Discord if any are found.
 def main():
+    args = parse_cli_args()
+
+    global LOG_FILE_PATH
+    if args.log:
+        LOG_FILE_PATH = args.log
+
+    if args.rules:
+        enabled = args.rules.split(",")
+        for rule in RULES_ENABLED:
+            RULES_ENABLED[rule] = rule in enabled
+
     events = load_logs(LOG_FILE_PATH)
 
     alerts = []
@@ -345,6 +456,7 @@ def main():
     alerts += detect_suspicious_user_agents(events)
 
     alerts = dedupe_alerts(alerts)
+    alerts = enrich_geoip(alerts)
 
     if alerts:
         print("[!] Suspicious activity detected:")
@@ -352,7 +464,15 @@ def main():
             icon = SEVERITY_ICONS.get(alert["severity"], "⚪")
             print(f"{icon} IP {alert['ip']} at {alert['time']}: {alert['reason']}")
 
-        send_alert(alerts)
+        if not args.no_json:
+            export_json(alerts)
+
+        if not args.no_csv:
+            export_csv(alerts)
+
+        if not args.no_discord:
+            send_alert(alerts)
+
     else:
         print("No suspicious activity detected.")
 

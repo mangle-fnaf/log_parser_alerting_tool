@@ -1,0 +1,10 @@
+ip,time,reason,type,severity,country,region,city,isp,org,asn
+192.168.0.10,2024-10-05 10:01:01,4 failed login attempts in 10s,bruteforce,high,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown
+10.0.0.5,2024-10-05 10:02:10,Accessed /admin page,admin_access,medium,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown
+10.0.0.8,2024-10-05 11:00:03,Accessed /admin page,admin_access,medium,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown
+172.16.0.20,2024-10-05 02:15:10,Activity outside normal hours,after_hours,low,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown
+10.0.0.8,2024-10-05 11:00:00,12 requests in 5s,high_volume,medium,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown
+10.0.0.8,2024-10-05 11:00:00,8 unique endpoints scanned,endpoint_scan,medium,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown
+192.168.0.10,2024-10-05 10:01:01,Suspicious user-agent: 'curl/7.88.1',suspicious_user_agent,medium,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown
+10.0.0.5,2024-10-05 10:02:10,Suspicious user-agent: 'python-requests/2.31.0',suspicious_user_agent,medium,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown
+10.0.0.8,2024-10-05 11:00:00,Suspicious user-agent: 'sqlmap/1.7',suspicious_user_agent,medium,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown
