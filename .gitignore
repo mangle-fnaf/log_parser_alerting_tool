@@ -1,6 +1,8 @@
 encryption.key
 __pycache__/
-*.log
 output/
 reports/
 alerts/
+*.log
+!logs/
+!logs/*.log

@@ -1,0 +1,6 @@
+#tests specifically for brute force activity (should trigger alerts)
+
+2024-10-05 10:00:00 10.0.0.5 POST /login 401 Mozilla/5.0
+2024-10-05 10:00:02 10.0.0.5 POST /login 401 Mozilla/5.0
+2024-10-05 10:00:04 10.0.0.5 POST /login 401 Mozilla/5.0
+2024-10-05 10:00:06 10.0.0.5 POST /login 401 Mozilla/5.0

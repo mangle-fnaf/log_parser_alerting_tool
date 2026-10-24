@@ -1,0 +1,7 @@
+#fie is a basline - normal traffic (should not trigger any alerts)
+
+2024-10-05 09:00:00 192.168.1.10 GET /home 200 Mozilla/5.0
+2024-10-05 09:01:12 192.168.1.11 GET /products 200 Mozilla/5.0
+2024-10-05 09:03:44 192.168.1.12 GET /contact 200 Mozilla/5.0
+2024-10-05 09:05:22 192.168.1.13 GET /about 200 Mozilla/5.0
+2024-10-05 09:08:51 192.168.1.14 GET /home 200 Mozilla/5.0
