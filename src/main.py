@@ -396,8 +396,8 @@ def send_alert(alerts):
     colour = SEVERITY_COLOURS_CFG[highest["severity"]]
 
     embed = {
-        "title": "🚨 Suspicious Activity Detected",
-        "description": "Multiple security events have been detected.",
+        "title": "Suspicious Activity Detected",
+        "description": "Security monitoring detected suspicious activity requiring investigation.",
         "color": colour,
         "fields": [],
         "timestamp": datetime.datetime.now(datetime.UTC).isoformat()
@@ -406,11 +406,38 @@ def send_alert(alerts):
     for alert in alerts:
         icon = severity_icons.get(alert.get("severity"), "⚪")
 
-        embed["fields"].append({
-            "name": f"{icon} {alert['type'].replace('_', ' ').title()}",
-            "value": f"**IP:** `{alert['ip']}`\n**Reason:** {alert['reason']}\n**Time:** `{alert['time'].strftime('%Y-%m-%d %H:%M:%S')}`",
-            "inline": False
-        })
+    geo = alert.get("geoip", {}) or {}
+
+    country = geo.get("country", "Unknown")
+    region = geo.get("region", "Unknown")
+    city = geo.get("city", "Unknown")
+    isp = geo.get("isp", "Unknown")
+    asn = geo.get("asn", "Unknown")
+
+    for alert in alerts:
+        icon = severity_icons.get(alert.get("severity"), "⚪")
+
+    geo = alert.get("geoip", {})
+
+    country = geo.get("country", "Unknown")
+    region = geo.get("region", "Unknown")
+    city = geo.get("city", "Unknown")
+    isp = geo.get("isp", "Unknown")
+    asn = geo.get("asn", "Unknown")
+
+    embed["fields"].append({
+        "name": f"{icon} {alert['type'].replace('_', ' ').title()}",
+        "value":
+            f"**IP:** `{alert['ip']}`\n"
+            f"**Country:** {country}\n"
+            f"**Region:** {region}\n"
+            f"**City:** {city}\n"
+            f"**ISP:** {isp}\n"
+            f"**ASN:** {asn}\n"
+            f"**Reason:** {alert['reason']}\n"
+            f"**Time:** `{alert['time'].strftime('%Y-%m-%d %H:%M:%S')}`",
+        "inline": False
+    })
 
     payload = {"embeds": [embed]}
 
